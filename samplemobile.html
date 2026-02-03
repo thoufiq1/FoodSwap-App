@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FoodSwap - Community Food Sharing</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3cb470",
+                        "accent": "#FF8C42",
+                        "secondary": "#FF8C42",
+                        "background-light": "#FAFAF7",
+                        "background-dark": "#141e18",
+                        "soft-cream": "#FDFBF7",
+                        "accent-orange": "#FF8C42",
+                        "warning": "#FF8C42",
+                        "danger": "#EF4444",
+                        "info": "#3B82F6",
+                    },
+                    fontFamily: {
+                        "display": ["Poppins", "Inter", "Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Inter", "Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .dark .glass {
+            background: rgba(20, 30, 24, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .dark .glass-card {
+            background: rgba(20, 30, 24, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24
+        }
+
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#101814] dark:text-white transition-colors duration-300">
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/history@5/umd/history.development.js"></script>
+    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { MemoryRouter, Routes, Route, Link, useNavigate, useLocation } = ReactRouterDOM;
+
+        // --- Shared Components ---
+
+        const BottomNav = ({ activeTab }) => {
+            const navigate = useNavigate();
+            return (
+                <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/90 dark:bg-gray-950/90 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800 pb-8 pt-3 px-6 flex justify-between items-center z-50">
+                    <button onClick={() => navigate('/home')} className={`flex flex-col items-center gap-1 ${activeTab === 'home' ? 'text-primary' : 'text-gray-400'}`}>
+                        <span className={`material-symbols-outlined ${activeTab === 'home' ? 'fill' : ''}`}>home</span>
+                        <span className="text-[10px] font-bold">Home</span>
+                    </button>
+                    <button onClick={() => navigate('/explore')} className={`flex flex-col items-center gap-1 ${activeTab === 'explore' ? 'text-primary' : 'text-gray-400'}`}>
+                        <span className={`material-symbols-outlined ${activeTab === 'explore' ? 'fill' : ''}`}>explore</span>
+                        <span className="text-[10px] font-bold">Explore</span>
+                    </button>
+                    <button onClick={() => navigate('/donate/step1')} className="flex flex-col items-center gap-1 -mt-8">
+                        <div className="bg-primary size-14 rounded-full shadow-lg shadow-primary/30 flex items-center justify-center text-white border-4 border-background-light dark:border-background-dark">
+                            <span className="material-symbols-outlined text-3xl">add</span>
+                        </div>
+                    </button>
+                    <button onClick={() => navigate('/notifications')} className={`flex flex-col items-center gap-1 ${activeTab === 'notifications' ? 'text-primary' : 'text-gray-400'}`}>
+                        <span className={`material-symbols-outlined ${activeTab === 'notifications' ? 'fill' : ''}`}>notifications</span>
+                        <span className="text-[10px] font-bold">Alerts</span>
+                    </button>
+                    <button onClick={() => navigate('/profile')} className={`flex flex-col items-center gap-1 ${activeTab === 'profile' ? 'text-primary' : 'text-gray-400'}`}>
+                        <span className={`material-symbols-outlined ${activeTab === 'profile' ? 'fill' : ''}`}>person</span>
+                        <span className="text-[10px] font-bold">Profile</span>
+                    </button>
+                </nav>
+            );
+        };
+
+        const TopBar = ({ title, showBack = false, showMenu = false, rightIcon = null, onRightClick = null }) => {
+            const navigate = useNavigate();
+            return (
+                <header className="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2">
+                        {showBack ? (
+                            <button onClick={() => navigate(-1)} className="p-1"><span className="material-symbols-outlined">arrow_back</span></button>
+                        ) : (
+                            showMenu ? <span className="material-symbols-outlined">menu</span> : (
+                                <div className="bg-primary p-1.5 rounded-lg flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-white text-[24px]">volunteer_activism</span>
+                                </div>
+                            )
+                        )}
+                        <h2 className="text-[#101814] dark:text-white text-xl font-bold font-poppins tracking-tight">{title}</h2>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {rightIcon ? (
+                            <button onClick={onRightClick} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <span className="material-symbols-outlined">{rightIcon}</span>
+                            </button>
+                        ) : (
+                            <button onClick={() => navigate('/profile')} className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-[#101814] dark:text-white">
+                                <span className="material-symbols-outlined">person</span>
+                            </button>
+                        )}
+                    </div>
+                </header>
+            );
+        };
+
+        // --- Screens ---
+
+        const WelcomeOnboarding = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="flex flex-col h-screen bg-soft-cream">
+                    <div className="flex justify-end p-6 pt-12">
+                        <button onClick={() => navigate('/home')} className="text-slate-400 font-semibold text-sm">Skip</button>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center px-8 pt-4 text-center">
+                        <div className="relative w-full aspect-square flex items-center justify-center mb-12">
+                            <div className="relative z-10 floating">
+                                <div className="w-64 h-64 bg-primary/10 rounded-full absolute -inset-4 blur-3xl"></div>
+                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgndnBUdeVHFxiGrq8pvl7SYM608Ygi5S1_wt1RA9Dz_dZxI-3fWasDCQw5qcswS_435kNKqdw088yLf8nwksO9MJOtnw_BlnJJW5jO73dgrA-0UsUwUn7l9uOKiKx6XFNbaaYyWKxumSl1CIck8iF0C1kH0InRPk-lUBTIOiDuOBMTdG58fToj92PV8u5EdQZjJVHP3GCDAHUtRd1-mgidPe5HBJccZkNwvYwFHrjy2aRKgM6qZ8kEyYrG7vvfjgVxy0iflrrmw" alt="Heart Earth" className="w-56 h-56 object-contain filter drop-shadow-2xl" />
+                            </div>
+                        </div>
+                        <h1 className="text-4xl font-bold tracking-tight mb-4">Welcome to <span className="text-primary">FoodSwap</span></h1>
+                        <p className="text-slate-500 leading-relaxed max-w-xs">Join thousands of neighbors in the mission to end food waste and feed our community.</p>
+                    </div>
+                    <div className="p-8 pb-12 flex flex-col items-center gap-8">
+                        <div className="flex gap-2">
+                            <div className="h-1.5 w-8 rounded-full bg-primary"></div>
+                            <div className="h-1.5 w-2 rounded-full bg-slate-200"></div>
+                            <div className="h-1.5 w-2 rounded-full bg-slate-200"></div>
+                        </div>
+                        <button onClick={() => navigate('/onboarding2')} className="w-full bg-primary text-white font-bold py-5 rounded-[2rem] text-lg">Next</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const Onboarding2 = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="flex flex-col h-screen bg-soft-cream px-8 pt-12 pb-10">
+                    <div className="absolute top-6 right-8">
+                        <button onClick={() => navigate('/home')} className="text-slate-400 font-semibold text-sm">Skip</button>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                        <div className="relative w-[180px] h-[360px] bg-slate-100 rounded-[2.5rem] border-[6px] border-slate-800 shadow-2xl overflow-hidden mb-8">
+                            <div className="absolute inset-0 bg-[#e5e7eb] flex items-center justify-center">
+                                <span className="material-symbols-outlined text-primary text-4xl">location_on</span>
+                            </div>
+                        </div>
+                        <h1 className="text-3xl font-bold tracking-tight text-center mb-4">Find Food Near You</h1>
+                        <p className="text-slate-500 text-center">Browse surplus food from neighbors and local businesses for free or swap.</p>
+                    </div>
+                    <div className="mt-auto pt-10 flex flex-col items-center gap-8">
+                        <div className="flex gap-2">
+                            <div className="h-2 w-2 bg-slate-200 rounded-full"></div>
+                            <div className="h-2 w-8 bg-primary rounded-full"></div>
+                            <div className="h-2 w-2 bg-slate-200 rounded-full"></div>
+                        </div>
+                        <button onClick={() => navigate('/onboarding3')} className="w-full h-14 bg-primary text-white rounded-2xl font-bold text-lg">Next</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const Onboarding3 = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="flex flex-col h-screen bg-background-light px-8 pt-12 pb-10">
+                    <div className="flex-1 flex flex-col items-center justify-center text-center">
+                        <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center mb-8">
+                            <div className="absolute inset-0 bg-primary/10 rounded-full animate-pulse"></div>
+                            <span className="material-symbols-outlined text-primary text-[100px]">volunteer_activism</span>
+                        </div>
+                        <h1 className="text-[32px] font-bold leading-tight mb-4 tracking-tight">Share Your <span className="text-primary">Surplus</span></h1>
+                        <p className="text-slate-500 text-lg max-w-[280px]">Snap a photo, post in seconds, and track your CO2 reduction impact.</p>
+                    </div>
+                    <div className="mt-auto space-y-6">
+                        <button onClick={() => navigate('/auth')} className="w-full bg-secondary text-white font-bold py-5 rounded-xl text-lg shadow-lg">Get Started</button>
+                        <div className="flex justify-center text-slate-400 text-sm">Step 3 of 3</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AuthScreen = () => {
+            const navigate = useNavigate();
+            const [mode, setMode] = useState('Login');
+            return (
+                <div className="min-h-screen flex flex-col px-6 py-12 bg-background-light">
+                    <div className="flex flex-col items-center mb-10">
+                        <div className="w-24 h-24 bg-white rounded-xl shadow-lg flex items-center justify-center mb-4 border border-zinc-100">
+                            <div className="grid grid-cols-2 gap-1 p-2">
+                                <span className="material-symbols-outlined text-orange-500 text-3xl">nutrition</span>
+                                <span className="material-symbols-outlined text-primary text-3xl">eco</span>
+                            </div>
+                        </div>
+                        <h1 className="text-3xl font-bold">FoodSwap</h1>
+                        <p className="text-zinc-500 text-sm mt-1">Community Freshness Shared</p>
+                    </div>
+                    <div className="flex h-12 w-full items-center justify-center rounded-full bg-zinc-200/50 p-1 mb-8">
+                        {['Login', 'Sign Up'].map(m => (
+                            <button key={m} onClick={() => setMode(m)} className={`flex-1 h-full rounded-full text-sm font-semibold transition-all ${mode === m ? 'bg-white shadow-sm text-zinc-900' : 'text-zinc-500'}`}>{m}</button>
+                        ))}
+                    </div>
+                    <div className="space-y-4 mb-8">
+                        <div>
+                            <p className="text-zinc-700 text-sm font-semibold mb-2 ml-1">Email</p>
+                            <input className="w-full rounded-xl border-none bg-white h-14 px-5 text-base shadow-sm focus:ring-2 focus:ring-primary/50" placeholder="hello@foodswap.com" type="email" />
+                        </div>
+                        <div>
+                            <p className="text-zinc-700 text-sm font-semibold mb-2 ml-1">Password</p>
+                            <input className="w-full rounded-xl border-none bg-white h-14 px-5 text-base shadow-sm focus:ring-2 focus:ring-primary/50" placeholder="Enter password" type="password" />
+                        </div>
+                    </div>
+                    <button onClick={() => navigate('/home')} className="w-full h-14 bg-primary text-white text-base font-bold rounded-full shadow-lg">Sign In</button>
+                    <div className="mt-auto pt-10 text-center">
+                        <p className="text-zinc-500 text-sm">By joining, you agree to our <a className="text-primary font-semibold" href="#">Terms</a></p>
+                    </div>
+                </div>
+            );
+        };
+
+        const LandingHome = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="pb-24">
+                    <TopBar title="FoodSwap" />
+                    <section className="px-4 pt-8 pb-10 relative overflow-hidden">
+                        <div className="absolute top-10 right-[-20px] w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
+                        <div className="flex flex-col gap-8">
+                            <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCorroZX_h9qZlsfw22C_kNd_m_uo_jJTztR0TBLNu0c4vV7hoYg7juvDAme9FvR-DyHvxtHTIvk9csBZT8lJcEg8s8_xsIu5AX6n1Cgfl76RLymAhDnSnGdJ3rHo3zfWecH1CBMqQ7HUUgQDvFBmlUEM7Z1XD6ZhWe7eMrB6DiNtApGmfUMR9UoF8O4o8_hLgwFi_uuWSlAi16ZUTVT9UlrHsTAsacPoTQqzECD2mY-4TkrHW4tBse0ZDqyaJetFVYkVhTD-0LkA')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundBlendMode: 'overlay' }}>
+                                <div className="z-10 flex gap-4">
+                                    <div className="bg-white p-4 rounded-2xl shadow-lg rotate-[-12deg]"><span className="material-symbols-outlined text-4xl text-accent">local_pizza</span></div>
+                                    <div className="bg-white p-4 rounded-2xl shadow-lg translate-y-[-20px]"><span className="material-symbols-outlined text-4xl text-primary">nutrition</span></div>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-4">
+                                <h1 className="text-5xl font-extrabold leading-[1.1] tracking-[-0.04em]">Save Food. <span className="text-primary">Feed People.</span></h1>
+                                <p className="text-gray-600 text-lg">Join the movement to turn surplus food into local impact. Sharing is the new shopping.</p>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <button onClick={() => navigate('/donate/step1')} className="flex-1 bg-primary text-white h-14 rounded-full px-8 text-lg font-bold shadow-lg">Start Donating</button>
+                                    <button onClick={() => navigate('/explore')} className="flex-1 bg-white text-[#101814] border-2 border-primary/20 h-14 rounded-full px-8 text-lg font-bold">Find Food</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section className="px-4 py-6">
+                        <div className="glass rounded-lg p-6 flex justify-between shadow-sm text-center">
+                            <div><span className="text-primary text-3xl font-black">12k+</span><p className="text-gray-500 text-xs font-bold uppercase">Donations</p></div>
+                            <div className="w-px bg-gray-200 h-12"></div>
+                            <div><span className="text-accent text-3xl font-black">8.5k</span><p className="text-gray-500 text-xs font-bold uppercase">Kg Saved</p></div>
+                        </div>
+                    </section>
+                    <BottomNav activeTab="home" />
+                </div>
+            );
+        };
+
+        const ExploreMap = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="h-screen w-full relative overflow-hidden">
+                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDxQKsd3enJSnHMGKarnrRt-N60Hb-ZYGMTBbJXXvLd4G5__ftXGHIJVTu_nWKTI7dlGWMqQrLgizQvKkzqfTXeYdclWZQpf6CmmsP2rcs8h6pNFM2AOiA5qScMMw1t13wmh9vbcgIfNZcGSUUA0jYF91O9zVMHwF-fx25ETKa30lB7zDtZB-ipf05CMSw64mJGv1u5ut2L20nEznjClYB5RmybWY0mWeFlJ6sbjN8t0yqcfH9PF8-T0WCr6CA5u75AR0MLjtX7Yg')" }}>
+                        <div className="absolute top-[30%] left-[25%] flex flex-col items-center">
+                            <div onClick={() => navigate('/item/1')} className="h-10 w-10 bg-primary rounded-full border-2 border-white flex items-center justify-center text-white shadow-xl cursor-pointer"><span className="material-symbols-outlined">eco</span></div>
+                        </div>
+                        <div className="absolute top-[45%] right-[20%] flex flex-col items-center">
+                            <div className="h-10 w-10 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center text-white shadow-xl"><span className="material-symbols-outlined">restaurant</span></div>
+                        </div>
+                    </div>
+                    <div className="relative z-10 px-4 pt-12">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="size-10 bg-white rounded-full flex items-center justify-center shadow-md"><span className="material-symbols-outlined">person</span></div>
+                            <div className="glass px-4 py-2 rounded-full"><h2 className="text-sm font-bold">Food Discovery</h2></div>
+                            <div className="size-10 bg-white rounded-full flex items-center justify-center shadow-md"><span className="material-symbols-outlined">notifications</span></div>
+                        </div>
+                        <div className="glass flex items-center px-4 h-12 rounded-xl mb-3 shadow-lg">
+                            <span className="material-symbols-outlined text-[#5c8a70]">search</span>
+                            <input className="bg-transparent border-none flex-1 focus:ring-0" placeholder="Search food near you" />
+                        </div>
+                    </div>
+                    <div className="absolute bottom-24 left-0 right-0 z-20 overflow-x-auto scrollbar-hide flex gap-4 px-4 pb-4">
+                        {[
+                            { title: 'Fresh Produce Basket', dist: '0.4 mi', type: 'Vegetables', color: 'bg-primary', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA5qTcgfE-Rk5cQbH0OXzlPxp9v-w4NjgAFVqSmFId30q8HrioHN4kKBM17-rIyHculDsrCX2oHIkTkcV3QB5C4PqE5fVPTeSMazZNvFzfViunF-gIPPPF4SJ4hsThmxm14jnTqN4HS0D24GKmr--W2H-Mn2UpSRq0YeVzAJXG-FlZMs1jqJyTPVxET_RKHoCpM49zZPpxAoZLHWIJNNU3TopqFPBKHiyKR1UP4hIWoaRsEXhyXUX2AKb4gLRLrEmrhEbWVbfMt2Q' },
+                            { title: 'Homemade Lasagna', dist: '1.2 mi', type: 'Warm Meals', color: 'bg-orange-500', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDub-dJy9r0B0b5c0-QJtmc50kqOrfeiw3u2UDFb8LyVCHBtUbtzHZ8jRKNp5qFC6eKzBGhSaBdenRE0ROaDMmfX2hbjcCzGfEv1bmhVlnDZfY1Nq7CoPrcWsCb9wLtFX7dRm2RDczuXgqWWOwNSXTCYVAizfeWnjUunxvCsNkgzHXLbS96odXME9JWI2HkQCnLbIFRqe1OflIwVUasJOfRM78HTpwhvC070O5F2eHRUjOWilSPJopd71PPUWo3G4p-Hr-qFu-LBw' }
+                        ].map((item, idx) => (
+                            <div key={idx} onClick={() => navigate('/item/1')} className="flex-none w-72 glass rounded-2xl p-3 shadow-2xl cursor-pointer">
+                                <div className="h-32 w-full rounded-xl bg-cover bg-center mb-3" style={{ backgroundImage: `url('${item.img}')` }}>
+                                    <div className={`${item.color} px-2 py-1 rounded-lg text-[10px] font-bold text-white m-2 inline-block`}>{item.type}</div>
+                                </div>
+                                <div className="flex justify-between items-start">
+                                    <h3 className="font-bold">{item.title}</h3>
+                                    <span className="text-primary font-bold text-xs">Free</span>
+                                </div>
+                                <div className="flex gap-3 text-xs text-gray-500 mt-1">
+                                    <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">location_on</span>{item.dist}</span>
+                                    <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">schedule</span>15m ago</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <BottomNav activeTab="explore" />
+                </div>
+            );
+        };
+
+        const ItemDetails = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen pb-32">
+                    <div className="fixed top-0 left-0 right-0 z-50 flex items-center p-4 justify-between">
+                        <button onClick={() => navigate(-1)} className="bg-white/80 rounded-full size-12 flex items-center justify-center shadow-md"><span className="material-symbols-outlined">arrow_back</span></button>
+                        <div className="flex gap-2">
+                            <button className="bg-white/80 rounded-full size-12 flex items-center justify-center shadow-md"><span className="material-symbols-outlined">share</span></button>
+                            <button className="bg-white/80 rounded-full size-12 flex items-center justify-center shadow-md"><span className="material-symbols-outlined">favorite</span></button>
+                        </div>
+                    </div>
+                    <div className="h-[400px] w-full bg-cover bg-center rounded-b-xl" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTrIqmvbuTOqOXcgXp9dD206xN9f21-rOzN5uYDmAB2axHZTJUBCb4VgAiKKRzVo7E14SAU7ET2vApBJvEItGxG_c4PjiwlcgYjET_3QU27jyzaaubOPA2EANL-kvoJHtUWJQIG19FAmbyfnyyWpm4VYbelVoUTTj30WJFVqgz2eEugbNj1r3cRo8QHb4d7byDA6VOaT4ewa_VvvUBBigCU7xMJkym6hZUJmUdX1K4pfIHm8sCjxVjNYVqqxb-EMLg1baeRa5Mww')" }}></div>
+                    <div className="px-4 pt-6">
+                        <h1 className="text-3xl font-bold tracking-tight">Fresh Home-grown Tomatoes</h1>
+                        <div className="flex items-center gap-1 py-1 text-primary text-sm font-medium">
+                            <span className="material-symbols-outlined text-sm">location_on</span>
+                            2.4 km away • Downtown Garden District
+                        </div>
+                        <div className="glass-card rounded-2xl p-4 shadow-sm mt-6">
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="text-gray-500 font-medium text-sm">Best Before</span>
+                                <span className="font-bold text-sm">Oct 25, 2023</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="text-gray-500 font-medium text-sm">Category</span>
+                                <span className="font-bold text-sm">Vegetables</span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                                <span className="text-gray-500 font-medium text-sm">Estimated Weight</span>
+                                <span className="font-bold text-sm">1.5 kg</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-white border rounded-2xl mt-8">
+                            <div className="flex items-center gap-3">
+                                <div className="size-12 rounded-full bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDzH21TXBfFVsZY58KmUfPmrD79xcOuSNqxJ-lTGzkOA-DK3aKTa809COLTTlF8jdDEfr6orsma_ONZWAUKsAHGH8PIsi80bGMy4Nj_djboW3KpAdMXPx2tdo9yiJtIkI_yiy0RfKguFpP77XwpKFZW9P3CoP47tW9P9t6OaqAoeQp37ySpHxfVhag85LPgaehlRLWVjHdKxmXqIbtVyCQ7wCW65BsjE-F3zOwwtqOh4z_-jFFDQFbsr58YIq8X5JVxpo-ZZxpG5g')" }}></div>
+                                <div><p className="font-bold">Sarah M.</p><p className="text-xs text-gray-500">4.9 Impact Rating</p></div>
+                            </div>
+                            <button onClick={() => navigate('/profile')} className="px-4 py-2 border border-primary text-primary rounded-full text-sm font-semibold">View Profile</button>
+                        </div>
+                        <div className="mt-8">
+                            <h3 className="text-lg font-bold mb-2">Description</h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">Organic tomatoes from my backyard garden. Perfectly ripe and juicy! No pesticides used. Please bring your own bag.</p>
+                        </div>
+                    </div>
+                    <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t p-4 pb-8 flex gap-3">
+                        <button onClick={() => navigate('/chat/1')} className="flex-1 bg-primary text-white py-4 rounded-full font-bold flex justify-center gap-2 shadow-lg"><span className="material-symbols-outlined">chat</span>Message to Request</button>
+                        <button className="bg-orange-500 text-white p-4 rounded-full shadow-lg"><span className="material-symbols-outlined">directions</span></button>
+                    </div>
+                </div>
+            );
+        };
+
+        const ChatScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="h-screen flex flex-col bg-background-light">
+                    <div className="flex items-center p-4 border-b bg-white">
+                        <span onClick={() => navigate(-1)} className="material-symbols-outlined cursor-pointer">arrow_back_ios</span>
+                        <div className="flex-1 text-center">
+                            <h2 className="font-bold">Sarah Jenkins</h2>
+                            <p className="text-primary text-[11px] font-semibold uppercase">Community Hero Level 5</p>
+                        </div>
+                        <span className="material-symbols-outlined">info</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div className="flex items-end gap-3">
+                            <div className="size-8 rounded-full bg-cover" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuD5-v7ifj3Pk8e19VNFarp5AT7iFvF8cSLhSdKsB0wKFUbjXuCBzWL6NZpPi3YNqG179P6U8mcZ5Y-zXGO2pmq251i1AeKEtvRAUFlFLEgvBMObS2zkN0GmBp-9PWoyXeUv5dXUzVxuuH2jMT1KUMe0do-9L23CvqmmU8agT50EzT8_409u3bQydtCyTvsssAHdDAI4DBHJhmmmt4MNk0lg0RHIu1il6c6MZnJUwuk-GZ0J7SWtLbPltEFmvxPey2-xw4B7ucXA3Q')" }}></div>
+                            <div className="bg-white rounded-2xl rounded-bl-none px-4 py-3 text-sm shadow-sm max-w-[80%]">Hi! I'm interested in the organic apples. When can I pick them up?</div>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <div className="bg-primary text-white rounded-2xl rounded-br-none px-4 py-3 text-sm shadow-md max-w-[80%]">I'm available now! I can meet you at the community center.</div>
+                        </div>
+                    </div>
+                    <div className="p-4 bg-white border-t flex items-center gap-3">
+                        <div className="size-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400"><span className="material-symbols-outlined">add</span></div>
+                        <input className="flex-1 bg-gray-50 border-none rounded-full px-5 py-3 text-sm" placeholder="Type a message..." />
+                        <button className="size-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg"><span className="material-symbols-outlined">send</span></button>
+                    </div>
+                </div>
+            );
+        };
+
+        const DonateStep1 = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen flex flex-col bg-background-light">
+                    <div className="flex items-center p-4 justify-between border-b bg-white">
+                        <span onClick={() => navigate('/home')} className="material-symbols-outlined cursor-pointer">close</span>
+                        <h2 className="font-bold flex-1 text-center pr-8">Donate Item</h2>
+                    </div>
+                    <div className="p-4">
+                        <div className="flex justify-between text-sm mb-2"><p className="font-medium">Listing Progress</p><p>Step 1 of 3</p></div>
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-primary w-1/3"></div></div>
+                    </div>
+                    <div className="p-4">
+                        <h1 className="text-2xl font-bold">Item Details</h1>
+                        <p className="text-gray-500 text-sm">Tell us what you're sharing today</p>
+                    </div>
+                    <div className="p-4">
+                        <div className="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-gray-300 py-14 bg-white/50">
+                            <div className="size-16 rounded-full bg-primary/10 text-primary flex items-center justify-center"><span className="material-symbols-outlined text-3xl">add_a_photo</span></div>
+                            <p className="font-bold">Upload Photo</p>
+                            <button className="bg-primary/10 text-primary px-6 h-12 rounded-full font-bold">Take Photo</button>
+                        </div>
+                    </div>
+                    <div className="p-4 space-y-4">
+                        <label className="block">
+                            <span className="font-semibold block mb-2">Item Name</span>
+                            <input className="w-full h-14 rounded-xl border-gray-200 bg-white" placeholder="e.g. Homemade Sourdough Bread" />
+                        </label>
+                        <div>
+                            <span className="font-semibold block mb-3">Category</span>
+                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                {['Bread', 'Veggies', 'Meals', 'Fruit', 'Dairy'].map(c => (
+                                    <button key={c} className="px-5 py-2 rounded-full border border-gray-200 bg-white text-sm font-medium hover:bg-primary hover:text-white">{c}</button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mt-auto p-4 pb-8">
+                        <button onClick={() => navigate('/donate/step2')} className="w-full bg-primary text-white h-14 rounded-full font-bold shadow-lg flex items-center justify-center gap-2">Next Step <span className="material-symbols-outlined">arrow_forward</span></button>
+                    </div>
+                </div>
+            );
+        };
+
+        const DonateStep2 = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen flex flex-col bg-background-light">
+                    <TopBar title="Donate Item" showBack onRightClick={() => navigate('/home')} rightIcon="close" />
+                    <div className="p-4">
+                        <div className="flex justify-between text-sm mb-2"><p className="font-medium">Pickup & Preferences</p><p>Step 2 of 3</p></div>
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-primary w-2/3"></div></div>
+                    </div>
+                    <div className="p-4 overflow-y-auto flex-1">
+                        <h3 className="text-lg font-bold mb-3">Pickup Location</h3>
+                        <div className="aspect-video rounded-xl bg-gray-200 bg-cover bg-center mb-6 flex items-center justify-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCiLrFisKGpPTU8iFth6J_C2DJOVTXnDYriZzqisVWV_v1c1_rN6kEYzecVAj5Np_mu2WSlNsCNeed-Weohca72KjVry_MIsQDGKBSobrTroE1XEVjLs97fCtm3bKn3fWgKwt9Ccj-0jYgOOHNdlZ2R1afkC9vF06lnniaLh6hGlrGT5aZiLm0Ys3DGvu4_L64n3qrhFfdM8CqeyV8xRo9Gv-eGj428PD2l4Kcb1iFbmVG0QSJtPx3TwmygG3oamunLg8litDe3ZQ')" }}>
+                            <span className="material-symbols-outlined text-primary text-5xl">location_on</span>
+                        </div>
+                        <h3 className="text-lg font-bold mb-4">Preferences</h3>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-2">
+                                <div className="flex items-center gap-3"><span className="material-symbols-outlined text-primary">home</span>Safe Porch Pickup</div>
+                                <div className="w-12 h-6 bg-primary rounded-full relative"><div className="absolute right-1 top-1 size-4 bg-white rounded-full"></div></div>
+                            </div>
+                            <div className="flex items-center justify-between p-2">
+                                <div className="flex items-center gap-3"><span className="material-symbols-outlined text-primary">chat_bubble</span>Message First</div>
+                                <div className="w-12 h-6 bg-gray-200 rounded-full relative"><div className="absolute left-1 top-1 size-4 bg-white rounded-full"></div></div>
+                            </div>
+                        </div>
+                        <div className="mt-8">
+                            <label className="font-bold block mb-2">Short Description/Notes</label>
+                            <textarea className="w-full border-gray-200 rounded-lg min-h-[100px]" placeholder="Allergens, ingredients..."></textarea>
+                        </div>
+                    </div>
+                    <div className="p-4 border-t bg-white">
+                        <button onClick={() => navigate('/donate/step3')} className="w-full bg-primary text-white py-4 rounded-xl font-bold">Next</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const DonateStep3 = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen flex flex-col bg-background-light">
+                    <TopBar title="Review & Post" showBack />
+                    <div className="p-4">
+                        <div className="h-2 bg-primary rounded-full mb-8"></div>
+                        <div className="bg-white rounded-xl shadow-sm overflow-hidden border">
+                            <div className="aspect-video bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCg7HUAwFIbUPMECo19o7mg5-4HKIbIB8-kwFRjrtTc-Do49K2e9TucL7fvBXwolJ5QDUgyPH9g6-5UQxEQLbLOXLs83COkKXJ-yYJTYjhF39xF4uCP82iYsuPWDqEWxDgKJQcVTHcHJWygkf9C1EatjB1XTMOkWpadrOe_COQXlW2k7_F-w4Bj4cKxPgdJsYZVj7QGJ5P-_Ccy49adzrhXM5pCKI4JSXPZymMZF7JyZA9fHB2OZ49Rn_h1nFp-343Y2stPjR4NgA')" }}></div>
+                            <div className="p-5">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h2 className="text-xl font-bold">Organic Gala Apples</h2>
+                                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-bold">FRUIT</span>
+                                </div>
+                                <div className="space-y-2 text-sm text-gray-600">
+                                    <p className="flex items-center gap-2"><span className="material-symbols-outlined text-primary text-sm">location_on</span>123 Greenway Street</p>
+                                    <p className="flex items-center gap-2"><span className="material-symbols-outlined text-primary text-sm">schedule</span>Available tomorrow, 10 AM - 4 PM</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-4 bg-accent-orange/10 border border-accent-orange/20 p-5 rounded-xl flex items-center gap-4">
+                            <div className="bg-accent-orange/20 p-2 rounded-full"><span className="material-symbols-outlined text-accent-orange">eco</span></div>
+                            <p className="text-sm">You are about to save <span className="font-bold text-accent-orange">0.5kg of CO2</span> by sharing!</p>
+                        </div>
+                    </div>
+                    <div className="mt-auto p-4 pb-8">
+                        <button onClick={() => navigate('/success')} className="w-full bg-primary text-white h-14 rounded-full font-bold shadow-lg">List Item Now</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const SuccessScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen bg-gradient-to-b from-[#e6ffef] to-[#f6f8f7] flex flex-col items-center">
+                    <div className="flex justify-end w-full p-4"><span onClick={() => navigate('/home')} className="material-symbols-outlined cursor-pointer">close</span></div>
+                    <div className="pt-8 pb-4 flex flex-col items-center">
+                        <div className="size-32 bg-white rounded-full shadow-2xl flex items-center justify-center mb-6 text-primary"><span className="material-symbols-outlined text-[80px] fill">favorite</span></div>
+                        <h1 className="text-[32px] font-bold">You're a Food Hero!</h1>
+                        <p className="text-gray-600 font-medium">Listing successfully created</p>
+                    </div>
+                    <div className="px-6 w-full mt-4">
+                        <div className="glass-card p-8 rounded-xl shadow-xl text-center">
+                            <div className="size-16 bg-primary/20 rounded-full mx-auto flex items-center justify-center mb-4 text-primary"><span className="material-symbols-outlined text-3xl">eco</span></div>
+                            <p className="text-2xl font-bold">You just saved 0.8kg of food waste!</p>
+                        </div>
+                    </div>
+                    <div className="mt-auto w-full p-6 pb-12 flex flex-col gap-3">
+                        <button onClick={() => navigate('/home')} className="h-14 bg-primary text-white rounded-xl font-bold">Share your impact</button>
+                        <button onClick={() => navigate('/home')} className="h-14 border-2 border-primary text-primary rounded-xl font-bold">Back to Home</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const ImpactProfile = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="pb-24">
+                    <TopBar title="Impact Profile" showBack rightIcon="settings" onRightClick={() => navigate('/settings')} />
+                    <div className="flex flex-col items-center p-6">
+                        <div className="relative mb-4">
+                            <div className="size-32 rounded-full bg-cover ring-4 ring-primary/20" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDxmgp-2poh8uZBl67fIjufGZ4ZO91Oife9alpa1O7tBooDuepGl4sOL-FmuqIwTrh_8xAWqcGWa5iCsal6TazwpuhWN3wnn5B1Yn6u_fcAxXaw1mP97MJFi0jW9qw4fEUSAXQxxKR862VhI-piMA48tnLbCAQwb_vRd-85ZBoI8GyNYo0OQ9mJJm6X8dJQRzlu_GWUbrgvkZnYHfSbXG2gelBuSTDUjxDBVXo4muvjtlqs3S6fZrpj2kTbbDf12fZ8LieRa-xljQ')" }}></div>
+                            <div className="absolute -bottom-2 -right-2 bg-accent text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><span className="material-symbols-outlined text-sm">stars</span>Level 12</div>
+                        </div>
+                        <h2 className="text-[22px] font-bold">Alex Rivers</h2>
+                        <p className="text-primary font-bold">Community Hero</p>
+                    </div>
+                    <div className="px-4">
+                        <div className="flex gap-3 p-4 bg-white border rounded-xl shadow-sm">
+                            <div className="flex-1 bg-primary/10 p-4 rounded-lg text-center"><p className="text-xs text-primary font-bold">FOOD SAVED</p><p className="text-xl font-bold">125kg</p></div>
+                            <div className="flex-1 bg-accent/10 p-4 rounded-lg text-center"><p className="text-xs text-accent font-bold">PEOPLE FED</p><p className="text-xl font-bold">480</p></div>
+                        </div>
+                    </div>
+                    <div className="px-4 mt-8">
+                        <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">Recent Activity</h3><button onClick={() => navigate('/leaderboard')} className="text-primary text-sm font-bold">Leaderboard</button></div>
+                        <div className="space-y-3">
+                            {['Donated 5kg Vegetables', 'Successful Bread Swap'].map((act, i) => (
+                                <div key={i} className="flex items-center gap-4 p-4 bg-white border rounded-xl">
+                                    <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><span className="material-symbols-outlined">restaurant</span></div>
+                                    <div className="flex-1"><p className="text-sm font-bold">{act}</p><p className="text-xs text-gray-400">Today, 2:30 PM</p></div>
+                                    <span className="text-[10px] font-bold uppercase bg-primary/20 text-primary px-2 py-1 rounded">Completed</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <BottomNav activeTab="profile" />
+                </div>
+            );
+        };
+
+        const LeaderboardScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen bg-background-light pb-24">
+                    <TopBar title="Community Leaderboard" showBack rightIcon="share" />
+                    <div className="flex px-4 py-3">
+                        <div className="flex h-12 flex-1 items-center bg-gray-200 rounded-full p-1">
+                            <button className="flex-1 bg-white rounded-full h-full text-sm font-bold text-primary shadow-sm">Weekly</button>
+                            <button className="flex-1 text-sm font-bold text-gray-500">All Time</button>
+                        </div>
+                    </div>
+                    <div className="flex items-end justify-center gap-2 px-4 pt-12 pb-10">
+                        <div className="flex flex-col items-center flex-1">
+                            <div className="size-20 rounded-full border-4 border-slate-300 mb-2" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCv24od289XsUt8BlG4P05_8z64UOcQPelJDtefdWm3Q12Rbyc59JKLgdTM7KkSSOAJr6WXlJLE31V1oM7PiTU4q7B6OoezZl4jUV40TsRjIBdKhO2dn8FYefTH-NS-bNDJ3ruoEmx0dcVmowVTXVaW04X67he8_lpnY-MVCC52UTEe2mKQeze_Ex63LJZhbMM2ecj_tciLQ8SvJawBvkEvmuPL9nfsDkJ_9KvSuJCZMnZjN1U_FVYOBjAglwdoDXcOjfq96537KQ')", backgroundSize: 'cover' }}></div>
+                            <p className="text-sm font-bold">Marcus T.</p>
+                            <p className="text-[10px] font-bold text-primary">82 KG SAVED</p>
+                        </div>
+                        <div className="flex flex-col items-center flex-1 -mt-6">
+                            <span className="material-symbols-outlined text-yellow-500 text-4xl mb-1">emoji_events</span>
+                            <div className="size-28 rounded-full border-4 border-yellow-400 mb-2" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDoiQ5wTHm5s9_-kNqx2aP7zWkuEuDDaArUQiL-kA9WRGrwV9ko01MWOVLFVaxi8xaKOcoS5_IEJCPkQJy6qy_e49me_1jWO2z4A_qKWC4dUzsQd4SgLUsbfN3rClH7OXXMjUBogueNKmt4Ez_PGohPYY-jvC4Vw3HaMOVPr05mxaqA6FKwTLmAg4FveAb_ZhA_iwtcxybT80-Ne3B73kgMWPEIzM3mixCP95Lh8OUzQ50zNXQECfjr6TmsFWrr9aPL5jnnuOpmFg')", backgroundSize: 'cover' }}></div>
+                            <p className="text-base font-bold">Sarah J.</p>
+                            <p className="text-[11px] font-bold text-primary">125 KG SAVED</p>
+                        </div>
+                        <div className="flex flex-col items-center flex-1">
+                            <div className="size-20 rounded-full border-4 border-amber-600/40 mb-2" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCBv2E-aTWUOZ3BP20QGmc6mkvGPWS7D3FDifVeJo8TditP1AU_uFFT3XSNVaXsbUEZfZMsAm4sMXACvUx4YRMJtgZO-fjr5lSMABoPxQ6MO76K9d6bkeTs-Flch_4IddWR8xi81zoS3UENa-0eh5Q3oBgVhh9zTMtbZApqsts9gofw6HGFALtG42_RuFVOKV7wS3Stkb5KBAQx4cFhUmtzXPJrnnpDhM0kZDDpXF2WG6od41dlB4MGC0Hv7rlTDU7k88DRJpJsiw')", backgroundSize: 'cover' }}></div>
+                            <p className="text-sm font-bold">Elena R.</p>
+                            <p className="text-[10px] font-bold text-primary">74 KG SAVED</p>
+                        </div>
+                    </div>
+                    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] p-4 bg-white/80 backdrop-blur-xl border-t z-30">
+                        <div className="flex items-center justify-between bg-primary p-4 rounded-2xl shadow-lg text-white">
+                            <div className="flex items-center gap-4">
+                                <span className="font-bold w-4 text-center">12</span>
+                                <div className="size-10 rounded-full border-2 border-white/30 bg-cover" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBXG3X8r0IXbuRUnLZEZQIvSdF6HaqWQ_ahoYCLWC6cxAZO-YCfupHEK7fn8J5-CnIHIK1kGmTG99aE5AI5Cf5lYqx0mv1ecd62n3M6vsKGU72Ulkq4xlGqsC21iXID1H8mCNPjbWfKIrXWjyxMfbn5FRTpKoRqN06S83VXTvA36ppgf2FQ69tUtPk40u0HeNQtHZS_h9o5V2vwUHKotVJDHoi5JlMfpv_cYXkXeqZqUTsnqamkri7iZu58kUexP09FsyowyfrggQ')" }}></div>
+                                <div><p className="font-bold">You</p><p className="text-xs text-white/80">Keep it up! 👏</p></div>
+                            </div>
+                            <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">34 kg</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const NotificationsScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen bg-background-light pb-24">
+                    <header className="sticky top-0 z-20 bg-background-light/80 backdrop-blur-md px-4 pt-6 pb-2">
+                        <div className="flex items-center justify-between mb-6">
+                            <span onClick={() => navigate(-1)} className="material-symbols-outlined cursor-pointer text-[28px]">chevron_left</span>
+                            <h1 className="text-lg font-bold">Notifications</h1>
+                            <button className="text-primary text-sm font-semibold">Mark all as read</button>
+                        </div>
+                    </header>
+                    <main className="px-4 space-y-6">
+                        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Today</h2>
+                        <div className="space-y-3">
+                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 relative">
+                                <div className="absolute top-4 right-4 size-2 bg-primary rounded-full"></div>
+                                <div className="size-10 bg-primary/10 rounded-full flex items-center justify-center text-primary"><span className="material-symbols-outlined fill">notifications</span></div>
+                                <div className="flex-1">
+                                    <div className="flex justify-between mb-0.5"><p className="text-[15px] font-bold">New listing near you</p><span className="text-xs text-gray-400">2m ago</span></div>
+                                    <p className="text-sm text-gray-600">Fresh Apples are available for pickup at 5th Avenue.</p>
+                                </div>
+                            </div>
+                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 relative">
+                                <div className="size-10 bg-warning/10 rounded-full flex items-center justify-center text-warning"><span className="material-symbols-outlined fill">favorite</span></div>
+                                <div className="flex-1">
+                                    <div className="flex justify-between mb-0.5"><p className="text-[15px] font-bold">Impact Milestone!</p><span className="text-xs text-gray-400">1h ago</span></div>
+                                    <p className="text-sm text-gray-600">You earned the <span className="font-semibold text-warning">Waste Warrior</span> badge!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                    <BottomNav activeTab="notifications" />
+                </div>
+            );
+        };
+
+        const SettingsScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen bg-off-white pb-32">
+                    <TopBar title="Settings" showBack />
+                    <main className="px-6 pt-2">
+                        <section className="mb-10">
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-primary">restaurant</span>Dietary Preferences</h2>
+                            <div className="grid grid-cols-2 gap-3">
+                                {['Vegan', 'Vegetarian', 'Gluten-Free', 'Nut-Free', 'Halal', 'Dairy-Free'].map(pref => (
+                                    <button key={pref} className={`px-4 py-3 rounded-full border-2 font-semibold transition-all ${pref === 'Vegan' || pref === 'Gluten-Free' ? 'bg-primary border-primary text-white' : 'border-primary/20 bg-white text-gray-700'}`}>{pref}</button>
+                                ))}
+                            </div>
+                        </section>
+                        <section className="mb-10">
+                            <div className="flex justify-between items-end mb-6">
+                                <h2 className="text-lg font-bold flex items-center gap-2"><span className="material-symbols-outlined text-primary">distance</span>Discovery Radius</h2>
+                                <span className="text-primary font-bold text-xl">8 km</span>
+                            </div>
+                            <input className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" type="range" value="8" />
+                        </section>
+                        <section className="mb-10">
+                            <h2 className="text-lg font-bold mb-6 flex items-center gap-2"><span className="material-symbols-outlined text-primary">notifications</span>Notifications</h2>
+                            <div className="space-y-6">
+                                {['New Items Nearby', 'Messages'].map(item => (
+                                    <div key={item} className="flex items-center justify-between">
+                                        <div><p className="font-semibold">{item}</p></div>
+                                        <div className="w-12 h-6 bg-primary rounded-full relative"><div className="absolute right-1 top-1 size-4 bg-white rounded-full"></div></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                        <button onClick={() => navigate('/help')} className="w-full py-4 bg-white border border-gray-200 rounded-xl font-bold flex items-center justify-center gap-2 mb-4"><span className="material-symbols-outlined">help</span>Help & Support</button>
+                    </main>
+                    <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t"><button onClick={() => navigate(-1)} className="w-full bg-primary text-white py-4 rounded-full font-bold shadow-lg">Save Preferences</button></div>
+                </div>
+            );
+        };
+
+        const HelpSupport = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="min-h-screen bg-background-light">
+                    <TopBar title="Help & Support" showBack />
+                    <div className="px-6 py-6">
+                        <div className="relative mb-8">
+                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">search</span>
+                            <input className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white border-none shadow-sm" placeholder="How can we help you?" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            {[
+                                { icon: 'health_and_safety', label: 'Food Safety', color: 'bg-green-100' },
+                                { icon: 'swap_horiz', label: 'How to Swap', color: 'bg-orange-100' },
+                                { icon: 'person', label: 'My Account', color: 'bg-blue-100' },
+                                { icon: 'military_tech', label: 'Impact & Badges', color: 'bg-purple-100' }
+                            ].map((item, i) => (
+                                <div key={i} className="glass-card p-5 rounded-2xl flex flex-col items-start gap-3">
+                                    <div className={`w-10 h-10 rounded-xl ${item.color} flex items-center justify-center text-primary`}><span className="material-symbols-outlined">{item.icon}</span></div>
+                                    <span className="font-semibold text-sm">{item.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-12 bg-white p-8 rounded-[2.5rem] text-center shadow-lg">
+                            <h3 className="text-xl font-bold mb-2">Still need help?</h3>
+                            <div className="space-y-3 mt-8">
+                                <button className="w-full bg-primary text-white h-14 rounded-full font-bold shadow-lg">Chat with Support</button>
+                                <button className="w-full bg-accent-orange text-white h-14 rounded-full font-bold shadow-lg">Email Us</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Main App ---
+
+        const App = () => {
+            return (
+                <MemoryRouter>
+                    <Routes>
+                        <Route path="/" element={<WelcomeOnboarding />} />
+                        <Route path="/onboarding2" element={<Onboarding2 />} />
+                        <Route path="/onboarding3" element={<Onboarding3 />} />
+                        <Route path="/auth" element={<AuthScreen />} />
+                        <Route path="/home" element={<LandingHome />} />
+                        <Route path="/explore" element={<ExploreMap />} />
+                        <Route path="/item/:id" element={<ItemDetails />} />
+                        <Route path="/chat/:id" element={<ChatScreen />} />
+                        <Route path="/donate/step1" element={<DonateStep1 />} />
+                        <Route path="/donate/step2" element={<DonateStep2 />} />
+                        <Route path="/donate/step3" element={<DonateStep3 />} />
+                        <Route path="/success" element={<SuccessScreen />} />
+                        <Route path="/profile" element={<ImpactProfile />} />
+                        <Route path="/leaderboard" element={<LeaderboardScreen />} />
+                        <Route path="/notifications" element={<NotificationsScreen />} />
+                        <Route path="/settings" element={<SettingsScreen />} />
+                        <Route path="/help" element={<HelpSupport />} />
+                    </Routes>
+                </MemoryRouter>
+            );
+        };
+
+        const container = document.getElementById('root');
+        const root = createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
